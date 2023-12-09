@@ -10,12 +10,14 @@ contract EzPay {
         bool indexed borrower,
         bytes32 indexed id
     );
-    event ChangeRequested(address lender, address borrower, bytes32 indexed id, bool notificationToLender);
+    event ChangeRequested(address indexed lender, address indexed borrower, bytes32 indexed id, bool notificationToLender);
+    event ClaimTokens(bytes32 indexed id);
+    event RequestAccepted(bytes32 indexed id, address indexed user);
 
-    event AcceptedLoan(address indexed payer, bytes32 indexed id);
-    event RepayedEMI();
-    event ColllateralAdded();
-    event LoanClosed();
+    event LoanTransferred(address indexed lender, address indexed borrower, bytes32 indexed id);
+    event EMIPaid(address indexed borrower, uint256 amount);
+    event CollateralWithdrawn(address indexed borrower, address token, uint256 amount);
+    event Liquidated(address indexed lender, address indexed borrower, uint256 amount);
 
     struct Request {
         address user;
@@ -26,6 +28,7 @@ contract EzPay {
         uint256 interestRate;
         uint256 paymentTokenAmount;
         uint256 collateralTokenAmount;
+        bool completed;
     }
 
     struct Changes {
@@ -91,8 +94,8 @@ contract EzPay {
     mapping(bytes32 => Request) public requests;
     mapping(bytes32 => Changes[]) public changes;
     mapping(bytes32 => UnclaimedTokens) public unclaimedTokens;
-    // mapping(bytes32 => mapping(address => uint256)) public interestedUsers;
-    // mapping(bytes32 => mapping(address => uint256)) public repliesToUsers;
+    mapping(bytes32 => mapping(address => uint256)) public interestedUsers;
+    mapping(bytes32 => mapping(address => uint256)) public repliesToUsers;
     mapping(bytes32 => mapping(address => SemiApprovedRequest[])) public finalApproval;
 
     mapping(bytes32 => Installment) public installments; // user => loanId => installment
@@ -152,11 +155,11 @@ contract EzPay {
         _changes.collateralTokenAmount = collateralTokenAmount;
 
         if(msg.sender != requests[id].user) {
-            // interestedUsers[id][msg.sender] = changes[id].length + 1;
+            interestedUsers[id][msg.sender] = changes[id].length + 1;
             changeRequestTo = msg.sender;
             _changes.changeRequestTo = requests[id].user;
         } else {
-            // repliesToUsers[id][changeRequestTo] = changes[id].length + 1;
+            repliesToUsers[id][changeRequestTo] = changes[id].length + 1;
             _changes.changeRequestTo = changeRequestTo;
         }
 
@@ -173,6 +176,8 @@ contract EzPay {
         IERC20(_unclaimedToken.token).transfer(_unclaimedToken.user, _unclaimedToken.amount);
 
         delete(unclaimedTokens[id]);
+
+        emit ClaimTokens(id);
     }
 
     function acceptRequest(bytes32 id, uint256 requestNumber) public {
@@ -213,12 +218,15 @@ contract EzPay {
         unclaimedTokens[id] = _unclaimedTokens;
 
         IERC20(token).transferFrom(msg.sender, address(this), amount);
+
+        emit RequestAccepted(id, _change.changeRequester);
     }
 
     function initiateEMI(
         bytes32 id,
         uint256 finalRequestIndex
     ) public {
+        require(requests[id].completed == false, "Initialised Already");
         bool originalUser = msg.sender == requests[id].user;
         finalRequestIndex = originalUser ? finalRequestIndex : 0;
 
@@ -259,12 +267,15 @@ contract EzPay {
         _emi.nextDate = uint48(block.timestamp + ONE_MONTH);
 
         amountPaid[id] = _emi;
+        requests[id].completed = true;
+
+        delete(unclaimedTokens[id]);
 
         IERC20(token).transferFrom(msg.sender, address(this), amount);
 
         IERC20(_semiApproval.paymentToken).transfer(borrower, _semiApproval.paymentTokenAmount);
 
-        // emit LoanRequested(payer, msg.sender, id);
+        emit LoanTransferred(lender, borrower, id);
     }
 
     function repayEMI(bytes32 id) public {
@@ -274,7 +285,7 @@ contract EzPay {
         EMIDetails memory _emi;
         uint256 amountToPay = amountPaid[id].emiAmount;
 
-        if (amountPaid[id].emiAmount > amountPaid[id].principle - amountPaid[id].emiPaid) {
+        if (amountPaid[id].emiAmount > amountPaid[id].principle + amountPaid[id].interest - amountPaid[id].emiPaid) {
             amountToPay = amountPaid[id].principle - amountPaid[id].emiPaid;
             installments[id].paymentFinalised = true;
         }
@@ -290,6 +301,8 @@ contract EzPay {
         amountPaid[id] = _emi;
 
         IERC20(installments[id].paymentToken).transferFrom(msg.sender, installments[id].lender, amountPaid[id].emiAmount);
+
+        emit EMIPaid(msg.sender, amountToPay);
     }
 
     function withdrawCollateral(bytes32 id) public {
@@ -299,6 +312,8 @@ contract EzPay {
         installments[id].collateralWithdrawn = true;
 
         IERC20(installments[id].collateralToken).transfer(installments[id].borrower, installments[id].collateralAmount);
+
+        emit CollateralWithdrawn(msg.sender, installments[id].collateralToken, installments[id].collateralAmount);
     }
 
     function liquidate(bytes32 id) public {
@@ -310,5 +325,7 @@ contract EzPay {
         installments[id].paymentFinalised = true;
 
         IERC20(installments[id].collateralToken).transfer(installments[id].lender, installments[id].collateralAmount);
+
+        emit Liquidated(installments[id].lender, installments[id].borrower, installments[id].collateralAmount);
     }
 }
