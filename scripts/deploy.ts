@@ -1,18 +1,24 @@
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
+import BigNumber from "ethers";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+ const USDC = await ethers.getContractFactory("EzPay");
+//  console.dir(USDC)
+ const usdc = await USDC.deploy();
+ await usdc.waitForDeployment();
 
-  const lockedAmount = ethers.utils.parseEther("1");
+ console.log('EzPay deployed at', usdc.target);
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+ await verifyContract("EzPay", usdc.target);
+}
 
-  await lock.deployed();
-
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+async function verifyContract(contractName: any, contractAddress: any, constructorArguments = []) {
+  console.log(`Verifying ${contractName} at ${contractAddress}...`);
+  await hre.run("verify:verify", {
+    address: contractAddress,
+    constructorArguments: constructorArguments,
+  });
+  console.log(`${contractName} verified successfully!`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

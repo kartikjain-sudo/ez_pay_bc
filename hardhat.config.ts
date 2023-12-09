@@ -45,8 +45,8 @@ const config: HardhatUserConfig = {
           && process.env.PK2 !== undefined && process.env.PK3 !== undefined
           && process.env.PK4 !== undefined )? [process.env.PRIVATE_KEY, process.env.PK2, process.env.PK3, process.env.PK4] : [],
     },
-    v4: {
-      url: process.env.GOERLI_URL || "",
+    mumbai: {
+      url: "https://polygon-mumbai-bor.publicnode.com",
       gasPrice: 30000000000, // 30 gwei
       // gas: 10000000,
       blockGasLimit: 30000000,
@@ -77,7 +77,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      goerli: process.env.ETHERSCAN_API_KEY || ""
+      polygonMumbai: process.env.ETHERSCAN_API_KEY || ""
     },
   },
   mocha: {
