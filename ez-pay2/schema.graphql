@@ -1,0 +1,76 @@
+type ChangeRequested @entity(immutable: true) {
+  id: Bytes!
+  lender: Bytes! # address
+  borrower: Bytes! # address
+  EzPay_id: Bytes! # bytes32
+  notificationToLender: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ClaimTokens @entity(immutable: true) {
+  id: Bytes!
+  EzPay_id: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CollateralWithdrawn @entity(immutable: true) {
+  id: Bytes!
+  borrower: Bytes! # address
+  token: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EMIPaid @entity(immutable: true) {
+  id: Bytes!
+  borrower: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Liquidated @entity(immutable: true) {
+  id: Bytes!
+  lender: Bytes! # address
+  borrower: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type LoanRequested @entity(immutable: true) {
+  id: Bytes!
+  requester: Bytes! # address
+  borrower: Boolean! # bool
+  EzPay_id: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type LoanTransferred @entity(immutable: true) {
+  id: Bytes!
+  lender: Bytes! # address
+  borrower: Bytes! # address
+  EzPay_id: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RequestAccepted @entity(immutable: true) {
+  id: Bytes!
+  EzPay_id: Bytes! # bytes32
+  user: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

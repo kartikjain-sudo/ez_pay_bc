@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract EzPay {
     // events
     event LoanRequested(
-        address indexed paymentToken,
+        address indexed requester,
         bool indexed borrower,
         bytes32 indexed id
     );
@@ -128,7 +128,7 @@ contract EzPay {
         requests[id].paymentTokenAmount = requiredAmount;
         requests[id].collateralTokenAmount = collateralTokenAmount;
 
-        emit LoanRequested(paymentToken, isLoanRequest, id);
+        emit LoanRequested(msg.sender, isLoanRequest, id);
     }
 
     function requestChanges(
@@ -277,6 +277,56 @@ contract EzPay {
 
         emit LoanTransferred(lender, borrower, id);
     }
+
+    // function acceptEMI(bytes32 _loanId) public payable {
+    //     Installment memory _installment = installments[_loanId];
+    //     require(msg.sender == _installment.payer, "Not Authorized");
+
+    //     installments[_loanId].requestAccepted = true;
+
+    //     emit AcceptedLoan(msg.sender, _loanId);
+    // }
+
+    // function calculateLoan(
+    //     bytes32 _loanId
+    // ) public view returns (EMIDetails memory) {
+    //     Installment memory _installment = installments[_loanId];
+
+    //     EMIDetails memory detail;
+
+    //     if (
+    //         block.timestamp < _installment.startDate ||
+    //         _installment.paymentFinalised == true
+    //     ) {
+    //         return detail;
+    //     }
+
+    //     uint256 timeperiodInMonth = ((_installment.timePeriod -
+    //         _installment.startDate) / ONE_MONTH);
+
+    //     detail.principle = _installment.amount / timeperiodInMonth;
+    //     detail.interest =
+    //         (detail.principle * _installment.interestRate) /
+    //         10000;
+
+    //     return detail;
+    // }
+
+    // function loanDepositRatio() public {}
+
+    // function earlyCloseRequest() public {}
+
+    // function closeLoan() public {}
+
+    // function addTokens(
+    //     bytes32 _loanId,
+    //     bool lender
+    // ) internal {
+    //     Request memory _request = requests[_loanId];
+
+    //     // Collateral memory _collateral;
+    //     collateral[_loanId];
+    // }
 
     function repayEMI(bytes32 id) public {
         require(installments[id].borrower == msg.sender);

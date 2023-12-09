@@ -4,12 +4,12 @@ import BigNumber from "ethers";
 async function main() {
  const USDC = await ethers.getContractFactory("EzPay");
 //  console.dir(USDC)
- const usdc = await USDC.deploy();
- await usdc.waitForDeployment();
+//  const usdc = await USDC.deploy();
+//  await usdc.waitForDeployment();
 
- console.log('EzPay deployed at', usdc.target);
+//  console.log('EzPay deployed at', usdc.target);
 
- await verifyContract("EzPay", usdc.target);
+ await verifyContract("EzPay", "0x41f13e048F658f8dBbAe7eB7841630A9ec8AaD78");
 }
 
 async function verifyContract(contractName: any, contractAddress: any, constructorArguments = []) {
