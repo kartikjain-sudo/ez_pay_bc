@@ -1,0 +1,6 @@
+[submodule "fe"]
+	path = fe
+	url = https://github.com/kartikjain-sudo/ez_pay_fe3
+[submodule "be"]
+	path = be
+	url = https://github.com/kartikjain-sudo/ez_pay_be
